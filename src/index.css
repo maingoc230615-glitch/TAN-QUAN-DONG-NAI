@@ -1,0 +1,41 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", sans-serif;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.glass { 
+  background: rgba(255, 255, 255, 0.8); 
+  backdrop-filter: blur(12px); 
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05); 
+}
+
+.bg-premium { 
+  background: linear-gradient(135deg, #450a0a 0%, #7f1d1d 100%); 
+}
+
+.swiper-button-next, .swiper-button-prev { 
+  color: #fff !important; 
+  background: rgba(0,0,0,0.3); 
+  width: 44px !important; 
+  height: 44px !important; 
+  border-radius: 50%; 
+  transition: all 0.2s ease; 
+}
+.swiper-button-next::after, .swiper-button-prev::after { 
+  font-size: 18px !important; 
+  font-weight: 800; 
+}
+.swiper-button-next:hover, .swiper-button-prev:hover { 
+  background: rgba(185,28,28,0.9) !important; 
+  color: #fff !important; 
+}
+
+.swiper-pagination-bullet-active { 
+  background: #b91c1c !important; 
+}
