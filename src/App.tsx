@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import * as xlsx from 'xlsx';
-import { Gem, ArrowRight, ShieldCheck, MapPin, Factory, TrendingUp, MessageCircle, PhoneCall, Calculator, DollarSign, CalendarClock, Percent, Wallet, PiggyBank, Play, Pause, DownloadCloud, User, Send } from 'lucide-react';
+import { Gem, ArrowRight, ShieldCheck, MapPin, Factory, TrendingUp, MessageCircle, PhoneCall, Calculator, DollarSign, CalendarClock, Percent, Wallet, PiggyBank, DownloadCloud, User, Send } from 'lucide-react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Navigation, Pagination, EffectFade } from 'swiper/modules';
 import { motion } from 'motion/react';
@@ -10,9 +10,20 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import 'swiper/css/effect-fade';
 
+const BANKS = [
+  { id: 'vcb', name: 'Vietcombank', rate: 6.0 },
+  { id: 'bidv', name: 'BIDV', rate: 6.5 },
+  { id: 'vtn', name: 'VietinBank', rate: 6.4 },
+  { id: 'agri', name: 'Agribank', rate: 6.0 },
+  { id: 'tcb', name: 'Techcombank', rate: 7.5 },
+  { id: 'mbb', name: 'MB Bank', rate: 7.9 },
+  { id: 'stb', name: 'Sacombank', rate: 8.5 },
+  { id: 'vib', name: 'VIB', rate: 8.5 },
+  { id: 'other', name: 'Khác (Tự tính/Nhập tay)', rate: '' }
+];
+
 export default function App() {
   const images = [
-    "https://i.postimg.cc/kXfHBsWj/TIN-TUC-DU-AN-BAT-DONG-SAN-DUAN-20-04-2026.png",
     "https://i.postimg.cc/wx5Zdgvf/gen-n-VI-TRI-CA-C-LO.jpg",
     "https://i.postimg.cc/Pfb9kTJT/gen-n-z7741852308051-8228db1de668f4d17b18076afa2adc28.jpg",
     "https://i.postimg.cc/dVQKfDjn/gen-h-z7741239072488-e314805a315608f5490c4fdbc846b535.jpg",
@@ -30,27 +41,43 @@ export default function App() {
 
   const [isScrolled, setIsScrolled] = useState(false);
 
-  // Audio State
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-
-  const toggleMusic = () => {
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause();
-      } else {
-        audioRef.current.play();
-      }
-      setIsPlaying(!isPlaying);
-    }
-  };
-
   // Loan Calculator State (V2)
+  const [selectedBank, setSelectedBank] = useState('stb');
   const [propertyPrice, setPropertyPrice] = useState(525000000);
   const [ownCapital, setOwnCapital] = useState(105000000);
   const [loanTermYears, setLoanTermYears] = useState(15);
   const [interestRateAnnual, setInterestRateAnnual] = useState(8.5);
   const [paymentMethod, setPaymentMethod] = useState<'decreasing' | 'annuity'>('decreasing');
+
+  const [contactName, setContactName] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+  const [isSubmittingContact, setIsSubmittingContact] = useState(false);
+
+  const handleContactSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmittingContact(true);
+    try {
+      await fetch("https://us-central1-zenleads-ai.cloudfunctions.net/publicWebhook/jbxNWvCQu4jxqwPu4qmL", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: contactName,
+          phone: contactPhone,
+          project: "Tân Quan - Đồng Nai"
+        }),
+      });
+      alert('Cảm ơn bạn! Yêu cầu đã được gửi thành công.');
+      setContactName("");
+      setContactPhone("");
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      alert('Đã có lỗi xảy ra. Vui lòng thử lại sau hoặc liên hệ trực tiếp qua SĐT.');
+    } finally {
+      setIsSubmittingContact(false);
+    }
+  };
 
   const { loanAmount, firstMonthPayment, totalInterest, principalPerMonth, firstMonthInterest } = useMemo(() => {
     const loanAmt = Math.max(0, propertyPrice - ownCapital);
@@ -95,112 +122,143 @@ export default function App() {
   };
 
   const exportCSV = () => {
-    const totalMonths = loanTermYears * 12;
-    const monthlyRate = interestRateAnnual / 100 / 12;
-    let remainingLoan = loanAmount;
-    
-    const aoa: any[][] = [];
-    
-    // Header section
-    aoa.push(["BẢNG TÍNH LỘ TRÌNH THANH TOÁN", "", "", "", ""]); // Row 1
-    aoa.push(["", "", "", "", ""]); // Row 2
-    aoa.push(["I. THÔNG TIN ĐẦU VÀO (Có thể thay đổi để tính tự động)", "", "", "", ""]); // Row 3
-    aoa.push(["Tên dự án:", "Tân Quan - Đồng Nai", "", "", ""]); // Row 4
-    aoa.push(["Giá trị tài sản (VNĐ):", { t: 'n', v: propertyPrice }, "", "", ""]); // Row 5
-    aoa.push(["Vốn tự có (VNĐ):", { t: 'n', v: ownCapital, f: "B5-B7" }, "", "", ""]); // Row 6
-    aoa.push(["Vốn vay (VNĐ):", { t: 'n', v: loanAmount }, "", "", ""]); // Row 7
-    aoa.push(["Lãi suất (%/năm):", { t: 'n', v: interestRateAnnual }, "", "", ""]); // Row 8
-    aoa.push(["Thời gian vay (năm):", { t: 'n', v: loanTermYears }, "", "", ""]); // Row 9
-    aoa.push(["Phương thức trả:", paymentMethod === 'decreasing' ? 'Dư nợ giảm dần' : 'Dư nợ ban đầu (Đều hàng tháng)', "", "", ""]); // Row 10
-    aoa.push(["", "", "", "", ""]); // Row 11
-    aoa.push(["II. LỘ TRÌNH THANH TOÁN CHI TIẾT", "", "", "", ""]); // Row 12
-    aoa.push(["Kỳ trả nợ", "Dư nợ đầu kỳ (VNĐ)", "Gốc phải trả (VNĐ)", "Lãi phải trả (VNĐ)", "Tổng tiền phải trả (VNĐ)"]); // Row 13
-    
-    // Table rows
-    const startRow = 14;
-    for (let i = 1; i <= totalMonths; i++) {
-        const r = startRow + i - 1; // 1-indexed row number in EXCEL
-
-        let b_val = remainingLoan; // initial value for B
-        let b_form = i === 1 ? `B7` : `B${r-1}-C${r-1}`;
+    try {
+        const totalMonths = loanTermYears * 12;
+        const monthlyRate = interestRateAnnual / 100 / 12;
+        let remainingLoan = loanAmount;
         
-        let c_val, c_form, d_val, d_form, e_val, e_form;
+        const aoa: any[][] = [];
         
-        if (paymentMethod === 'decreasing') {
-            const principalPM = loanAmount / totalMonths;
-            const interestPM = remainingLoan * monthlyRate;
-            const totalPM = principalPM + interestPM;
-            
-            c_val = principalPM;
-            c_form = `B$7/(B$9*12)`;
-            
-            d_val = interestPM;
-            d_form = `B${r}*(B$8/100/12)`;
-            
-            e_val = totalPM;
-            e_form = `C${r}+D${r}`;
-            
-            remainingLoan -= principalPM;
-        } else {
-            const monthlyPmt = loanAmount * (monthlyRate * Math.pow(1 + monthlyRate, totalMonths)) / (Math.pow(1 + monthlyRate, totalMonths) - 1);
-            const interestPM = remainingLoan * monthlyRate;
-            const principalPM = monthlyPmt - interestPM;
-            
-            c_val = principalPM;
-            c_form = `E${r}-D${r}`;
-            
-            d_val = interestPM;
-            d_form = `B${r}*(B$8/100/12)`;
-            
-            e_val = monthlyPmt;
-            e_form = `PMT(B$8/100/12,B$9*12,-B$7)`;
-            
-            remainingLoan -= principalPM;
-        }
+        // Header section
+        aoa.push(["BẢNG TÍNH LỘ TRÌNH THANH TOÁN", "", "", "", "", ""]); // Row 1
+        aoa.push(["", "", "", "", "", ""]); // Row 2
+        aoa.push(["I. THÔNG TIN ĐẦU VÀO (Có thể thay đổi để tính tự động)", "", "", "", "", ""]); // Row 3
+        aoa.push(["Tên dự án:", "Tân Quan - Đồng Nai", "", "", "", ""]); // Row 4
+        
+        const bankName = BANKS.find(b => b.id === selectedBank)?.name || "Khác (Tự tính/Nhập tay)";
+        aoa.push(["Ngân hàng vay:", bankName, "", "", "", ""]); // Row 5
+        
+        aoa.push(["Giá trị tài sản (VNĐ):", { t: 'n', v: propertyPrice }, "", "", "", ""]); // Row 6
+        aoa.push(["Vốn tự có (VNĐ):", { t: 'n', v: ownCapital }, "", "", "", ""]); // Row 7
+        aoa.push(["Vốn vay (VNĐ):", { t: 'n', v: loanAmount, f: "B6-B7" }, "", "", "", ""]); // Row 8
+        aoa.push(["Lãi suất (%/năm):", { t: 'n', v: interestRateAnnual }, "", "", "", ""]); // Row 9
+        aoa.push(["Thời gian vay (năm):", { t: 'n', v: loanTermYears }, "", "", "", ""]); // Row 10
+        aoa.push(["Phương thức trả:", paymentMethod === 'decreasing' ? 'Dư nợ giảm dần' : 'Dư nợ ban đầu (Đều hàng tháng)', "", "", "", ""]); // Row 11
+        aoa.push(["", "", "", "", "", ""]); // Row 12
+        aoa.push(["II. LỘ TRÌNH THANH TOÁN CHI TIẾT", "", "", "", "", ""]); // Row 13
+        aoa.push(["Kỳ trả nợ", "Dư nợ đầu kỳ (VNĐ)", "Gốc phải trả (VNĐ)", "Lãi phải trả (VNĐ)", "Tổng tiền phải trả (VNĐ)", "Dư nợ còn lại (VNĐ)"]); // Row 14
+        
+        // Table rows
+        const startRow = 15;
+        for (let i = 1; i <= totalMonths; i++) {
+            const r = startRow + i - 1; // 1-indexed row number in EXCEL
 
-        aoa.push([
-            { t: 'n', v: i }, // A: Kỳ trả nợ
-            { t: 'n', v: Math.round(b_val), f: b_form }, // B: Dư nợ đầu kỳ
-            { t: 'n', v: Math.round(c_val), f: c_form }, // C: Gốc
-            { t: 'n', v: Math.round(d_val), f: d_form }, // D: Lãi
-            { t: 'n', v: Math.round(e_val), f: e_form }  // E: Tổng
-        ]);
-    }
-    
-    const worksheet = xlsx.utils.aoa_to_sheet(aoa);
-    
-    // Apply number format to values
-    const numFmt = '#,##0';
-    // Format input cells
-    ['B5', 'B6', 'B7'].forEach(cell => {
-        if (worksheet[cell]) worksheet[cell].z = numFmt;
-    });
-    
-    // Format table cells
-    for (let r = startRow; r < startRow + totalMonths; r++) {
-        ['B', 'C', 'D', 'E'].forEach(col => {
-            const cell = col + r;
-            if (worksheet[cell]) {
-                worksheet[cell].z = numFmt;
+            let b_val = remainingLoan; // initial value for B
+            let b_form = i === 1 ? `B8` : `F${r-1}`;
+            
+            let c_val = 0, c_form = "", d_val = 0, d_form = "", e_val = 0, e_form = "", f_val = 0, f_form = "";
+            
+            if (paymentMethod === 'decreasing') {
+                const principalPM = totalMonths > 0 ? loanAmount / totalMonths : 0;
+                const interestPM = remainingLoan * monthlyRate;
+                const totalPM = principalPM + interestPM;
+                
+                c_val = principalPM;
+                c_form = `B$8/(B$10*12)`;
+                
+                // Allow exact 0 match on last month for Principal if needed, but in Excel formula it handles naturally.
+                if (i === totalMonths) {
+                    c_form = `B${r}`; // Last month principal pays exactly what's left
+                }
+                
+                d_val = interestPM;
+                d_form = `B${r}*(B$9/100/12)`;
+                
+                e_val = totalPM;
+                e_form = `C${r}+D${r}`;
+                
+                remainingLoan -= principalPM;
+            } else {
+                let monthlyPmt = 0;
+                if (monthlyRate > 0 && totalMonths > 0) {
+                    monthlyPmt = loanAmount * (monthlyRate * Math.pow(1 + monthlyRate, totalMonths)) / (Math.pow(1 + monthlyRate, totalMonths) - 1);
+                } else if (totalMonths > 0) {
+                    monthlyPmt = loanAmount / totalMonths;
+                }
+                
+                const interestPM = remainingLoan * monthlyRate;
+                const principalPM = monthlyPmt - interestPM;
+                
+                e_val = monthlyPmt;
+                e_form = monthlyRate > 0 ? `PMT(B$9/100/12,B$10*12,-B$8)` : `B$8/(B$10*12)`;
+                
+                d_val = interestPM;
+                d_form = `B${r}*(B$9/100/12)`;
+                
+                c_val = principalPM;
+                c_form = `E${r}-D${r}`;
+                
+                // Ensure exact match on last month
+                if (i === totalMonths) {
+                    c_form = `B${r}`;
+                    e_form = `C${r}+D${r}`;
+                }
+
+                remainingLoan -= principalPM;
             }
-        });
-    }
-    
-    // Set column widths to perfectly fit A4 width
-    // Total approx acceptable for portrait A4 in Excel is ~88 standard chars wide
-    const wscols = [
-        {wch: 12}, // A: Kỳ trả nợ
-        {wch: 22}, // B: Dư nợ đầu kỳ
-        {wch: 22}, // C: Gốc phải trả
-        {wch: 22}, // D: Lãi phải trả
-        {wch: 24}  // E: Tổng tiền phải trả
-    ];
-    worksheet['!cols'] = wscols;
+            
+            f_val = remainingLoan;
+            f_form = `B${r}-C${r}`;
+            
+            if (i === totalMonths) {
+                f_val = 0;
+            }
 
-    const workbook = xlsx.utils.book_new();
-    xlsx.utils.book_append_sheet(workbook, worksheet, "Lộ trình thanh toán");
-    
-    xlsx.writeFile(workbook, "lo-trinh-thanh-toan.xlsx");
+            aoa.push([
+                { t: 'n', v: i }, // A: Kỳ trả nợ
+                { t: 'n', v: Math.max(0, Math.round(b_val)), f: b_form }, // B: Dư nợ đầu kỳ
+                { t: 'n', v: Math.max(0, Math.round(c_val)), f: c_form }, // C: Gốc
+                { t: 'n', v: Math.max(0, Math.round(d_val)), f: d_form }, // D: Lãi
+                { t: 'n', v: Math.max(0, Math.round(e_val)), f: e_form }, // E: Tổng
+                { t: 'n', v: Math.max(0, Math.round(f_val)), f: f_form }  // F: Dư nợ còn lại
+            ]);
+        }
+        
+        const worksheet = xlsx.utils.aoa_to_sheet(aoa);
+        
+        // Apply number format to values
+        const numFmt = '#,##0';
+        ['B6', 'B7', 'B8'].forEach(cell => {
+            if (worksheet[cell]) worksheet[cell].z = numFmt;
+        });
+        
+        for (let r = startRow; r < startRow + totalMonths; r++) {
+            ['B', 'C', 'D', 'E', 'F'].forEach(col => {
+                const cell = col + r;
+                if (worksheet[cell]) {
+                    worksheet[cell].z = numFmt;
+                }
+            });
+        }
+        
+        const wscols = [
+            {wch: 10}, 
+            {wch: 18}, 
+            {wch: 18}, 
+            {wch: 18}, 
+            {wch: 20}, 
+            {wch: 20}  
+        ];
+        worksheet['!cols'] = wscols;
+
+        const workbook = xlsx.utils.book_new();
+        xlsx.utils.book_append_sheet(workbook, worksheet, "Lộ trình thanh toán");
+        
+        xlsx.writeFile(workbook, "lo-trinh-thanh-toan.xlsx");
+    } catch (err) {
+        console.error("Export error:", err);
+        alert("Đã có lỗi xảy ra khi xuất file Excel. Vui lòng thử lại!");
+    }
   };
 
   useEffect(() => {
@@ -227,6 +285,7 @@ export default function App() {
             <div className="hidden lg:flex items-center gap-8 text-sm font-bold uppercase text-slate-600">
                 <a href="#about" onClick={(e) => handleScroll(e, 'about')} className="hover:text-red-700 transition">Tổng quan</a>
                 <a href="#gallery" onClick={(e) => handleScroll(e, 'gallery')} className="hover:text-red-700 transition">Thư viện</a>
+                <a href="#location" onClick={(e) => handleScroll(e, 'location')} className="hover:text-red-700 transition">Vị trí</a>
                 <a href="#calculator" onClick={(e) => handleScroll(e, 'calculator')} className="hover:text-red-700 transition">Tính lãi vay</a>
                 <a href="#contact" onClick={(e) => handleScroll(e, 'contact')} className="bg-red-700 text-white px-6 py-3 rounded-full hover:shadow-lg hover:shadow-red-900/20 transition hover:-translate-y-0.5">Nhận ưu đãi 1 chỉ vàng</a>
             </div>
@@ -403,6 +462,27 @@ export default function App() {
                 >
                     <div className="space-y-6">
                         <div className="grid md:grid-cols-2 gap-6">
+                            <div className="md:col-span-2">
+                                <label className="font-bold flex items-center gap-2 mb-2 text-slate-700">Ngân hàng vay (Tự động điền lãi suất tham khảo)</label>
+                                <select 
+                                    value={selectedBank}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        setSelectedBank(val);
+                                        const bank = BANKS.find(b => b.id === val);
+                                        if (bank && bank.rate !== '') {
+                                            setInterestRateAnnual(Number(bank.rate));
+                                        }
+                                    }}
+                                    className="w-full p-4 rounded-xl border border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none text-lg font-bold text-slate-800 transition bg-white"
+                                >
+                                    {BANKS.map(b => (
+                                        <option key={b.id} value={b.id}>
+                                            {b.name} {b.rate ? `(${b.rate}%/năm)` : ''}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
                             <div>
                                 <label className="font-bold flex items-center gap-2 mb-2 text-slate-700">Giá trị tài sản (VNĐ)</label>
                                 <input 
@@ -513,6 +593,28 @@ export default function App() {
         </div>
       </section>
       
+      <section id="location" className="py-24 bg-slate-50 relative">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-6 tracking-tight">Vị Trí <span className="text-red-700">Thực Tế</span></h2>
+            <div className="w-24 h-1 bg-red-700 mx-auto rounded-full mb-8"></div>
+            <p className="text-xl text-slate-600 max-w-2xl mx-auto">Sở hữu vị trí đắc địa, giao thông thuận tiện kết nối. Xem ngay trên bản đồ bên dưới.</p>
+          </div>
+          <div className="rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-[4/3] md:aspect-[21/9]">
+            <iframe 
+                src="https://maps.google.com/maps?q=11.564753,106.730354&hl=vi&z=17&output=embed" 
+                width="100%" 
+                height="100%" 
+                style={{ border: 0 }} 
+                allowFullScreen={true} 
+                loading="lazy" 
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Vị trí dự án Tân Quan"
+            ></iframe>
+          </div>
+        </div>
+      </section>
+
       {/* Lead Capture Section */}
       <section id="contact" className="py-24 bg-white relative">
         <div className="max-w-7xl mx-auto px-6">
@@ -564,23 +666,41 @@ export default function App() {
                    viewport={{ once: true }}
                    transition={{ duration: 0.6, delay: 0.2 }}
                 >
-                    <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); alert('Cảm ơn bạn! Yêu cầu đã được gửi.'); }}>
+                    <form className="space-y-5" onSubmit={handleContactSubmit}>
                         <div>
                             <label className="block text-sm font-bold text-slate-700 mb-2">Họ và tên *</label>
                             <div className="relative">
                                 <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                <input required type="text" placeholder="Nhập tên của bạn" className="w-full pl-12 pr-4 py-4 rounded-xl border border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition bg-white" />
+                                <input 
+                                    required 
+                                    type="text" 
+                                    placeholder="Nhập tên của bạn" 
+                                    value={contactName}
+                                    onChange={(e) => setContactName(e.target.value)}
+                                    className="w-full pl-12 pr-4 py-4 rounded-xl border border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition bg-white" 
+                                />
                             </div>
                         </div>
                         <div>
                             <label className="block text-sm font-bold text-slate-700 mb-2">Số điện thoại / Zalo *</label>
                             <div className="relative">
                                 <PhoneCall className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                <input required type="tel" placeholder="09xx xxx xxx" className="w-full pl-12 pr-4 py-4 rounded-xl border border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition bg-white" />
+                                <input 
+                                    required 
+                                    type="tel" 
+                                    placeholder="09xx xxx xxx" 
+                                    value={contactPhone}
+                                    onChange={(e) => setContactPhone(e.target.value)}
+                                    className="w-full pl-12 pr-4 py-4 rounded-xl border border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition bg-white" 
+                                />
                             </div>
                         </div>
-                        <button type="submit" className="w-full bg-red-700 hover:bg-red-800 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-red-900/20 transition transform hover:-translate-y-1">
-                            <Send size={18} /> NHẬN BẢNG BÁO GIÁ
+                        <button 
+                            type="submit" 
+                            disabled={isSubmittingContact}
+                            className="w-full bg-red-700 hover:bg-red-800 disabled:bg-red-400 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-red-900/20 transition transform hover:-translate-y-1"
+                        >
+                            {isSubmittingContact ? "ĐANG GỬI..." : <><Send size={18} /> NHẬN BẢNG BÁO GIÁ</>}
                         </button>
                     </form>
                 </motion.div>
@@ -588,16 +708,7 @@ export default function App() {
         </div>
       </section>
 
-      {/* Floating Elements (Audio + CTA) */}
-      <div className="fixed bottom-6 left-6 z-[200]">
-          <audio ref={audioRef} loop>
-              <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg" />
-          </audio>
-          <button onClick={toggleMusic} className="w-12 h-12 md:w-14 md:h-14 bg-white rounded-full shadow-2xl flex items-center justify-center border-2 border-red-700 hover:scale-110 transition text-red-700 focus:outline-none">
-              {isPlaying ? <Pause size={20} /> : <Play size={20} className="ml-1" />}
-          </button>
-      </div>
-
+      {/* Floating Elements (CTA) */}
       <div className="fixed bottom-6 right-6 md:right-8 flex flex-col gap-4 z-[200]">
         <a href="https://zalo.me/0988712213" target="_blank" rel="noreferrer" className="w-14 h-14 md:w-16 md:h-16 bg-[#0068FF] text-white rounded-full flex items-center justify-center shadow-2xl hover:scale-110 transition animate-bounce ml-auto">
             <MessageCircle className="w-6 h-6 md:w-8 md:h-8" />
