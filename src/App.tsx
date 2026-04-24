@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import * as xlsx from 'xlsx';
 import { Gem, ArrowRight, ShieldCheck, MapPin, Factory, TrendingUp, MessageCircle, PhoneCall, Calculator, DollarSign, CalendarClock, Percent, Wallet, PiggyBank, Play, Pause, DownloadCloud, User, Send } from 'lucide-react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Navigation, Pagination, EffectFade } from 'swiper/modules';
@@ -12,34 +13,11 @@ import 'swiper/css/effect-fade';
 export default function App() {
   const images = [
     "https://i.postimg.cc/kXfHBsWj/TIN-TUC-DU-AN-BAT-DONG-SAN-DUAN-20-04-2026.png",
-    "https://i.postimg.cc/dVQKfDjn/gen-h-z7741239072488-e314805a315608f5490c4fdbc846b535.jpg",
-    "https://i.postimg.cc/9QXjkzBV/gen-h-z7741976427203-4435005cfda47d3d8be0acb0cc25d1e7.jpg",
-    "https://i.postimg.cc/Z5YhQ0Lb/gen-h-z7742963042434-59d1da95d660e5bfb1c38d6b89733917.jpg",
-    "https://i.postimg.cc/Vksch5Fw/gen-h-z7742963044315-20c8c2af1256d2cca1bf6c79b0c2e48f.jpg",
-    "https://i.postimg.cc/YC2wPjxt/gen-h-z7742963045035-fc33a8a386377a8c8a932eaa0ef7ec9c.jpg",
-    "https://i.postimg.cc/HLV1pKKw/gen-h-z7742963046910-4126800ac839a980e446497bc509296a.jpg",
-    "https://i.postimg.cc/TPpvRSSc/gen-h-z7742963048941-51d8aed9b91766965744648f7c532ea3.jpg",
-    "https://i.postimg.cc/JhGC1ggx/gen-h-z7742963051490-1b85efaf07c2cff8b1a03d53c4c7c423.jpg",
-    "https://i.postimg.cc/W4hc2KKK/gen-h-z7742963053261-defa297f367607f89bcdcdef1dd3eeba.jpg",
-    "https://i.postimg.cc/43qknPRs/gen-h-z7742963056300-0a4e82a07eec2ae1a31981150961a63a.jpg",
-    "https://i.postimg.cc/LXPdPPm6/gen-h-z7742963057776-949dda16be8918b3a8ab6469b64a641a.jpg",
-    "https://i.postimg.cc/D039PzzP/gen-h-z7742963059493-c7ec41c1e64d5589af430eff61198a5f.jpg",
-    "https://i.postimg.cc/T1jZ7Xyz/gen-h-z7742963060294-8327103fab10c398366c879ca70a276a.jpg",
-    "https://i.postimg.cc/d3RzHKkw/gen-h-z7742963061998-80bbfc8e38bcc36fdb3c066015440bc8.jpg",
-    "https://i.postimg.cc/wxh8TDfg/gen-h-z7742963063336-61724a07a7d09ef239eb44a1f4754fbd.jpg",
-    "https://i.postimg.cc/X78R946r/gen-h-z7742963064799-83fa2999fd9cd12de83bd4fbb6d9dcfd.jpg",
-    "https://i.postimg.cc/kXc0WqPt/gen-h-z7742963068922-fd66b3dc44c456e786cbefa7bfca4c07.jpg",
-    "https://i.postimg.cc/sggtcq3H/gen-h-z7742963070622-b3e7aedd1ed0ff6089e90c537223a2bd.jpg",
-    "https://i.postimg.cc/K88dNwZZ/gen-h-z7742963071056-337134adfc1b7cee9101c54687b8a40b.jpg",
-    "https://i.postimg.cc/9fvKcfyh/gen-h-z7742963072866-684c2d279e1b05671ea15abfdbafe51c.jpg",
-    "https://i.postimg.cc/25PMC5nb/gen-h-z7743307076636-641c6f0aec31491fd60d8a51aad5edf1.jpg",
-    "https://i.postimg.cc/fysP0gHx/gen-h-z7743311946089-291b5b445742fbdb4f3bbb395f54b20f.jpg",
-    "https://i.postimg.cc/L5VbkBw8/gen-h-z7743311950705-80d51ed0f35a896808c9ffe8f1b1fb11.jpg",
-    "https://i.postimg.cc/595TMbyM/gen-h-z7744531336554-50a8e46da7a0894ff97e546d6ac54f6b.jpg",
     "https://i.postimg.cc/wx5Zdgvf/gen-n-VI-TRI-CA-C-LO.jpg",
     "https://i.postimg.cc/Pfb9kTJT/gen-n-z7741852308051-8228db1de668f4d17b18076afa2adc28.jpg",
-    "https://i.postimg.cc/rF8bV3R8/Inkedgen-h-z7741976427203-4435005cfda47d3d8be0acb0cc25d1e7-LI.jpg",
-    "https://i.postimg.cc/bNzMyWSx/Inkedgen-n-z7741852308051-8228db1de668f4d17b18076afa2adc28-LI.jpg"
+    "https://i.postimg.cc/dVQKfDjn/gen-h-z7741239072488-e314805a315608f5490c4fdbc846b535.jpg",
+    "https://i.postimg.cc/fysP0gHx/gen-h-z7743311946089-291b5b445742fbdb4f3bbb395f54b20f.jpg",
+    "https://i.postimg.cc/595TMbyM/gen-h-z7744531336554-50a8e46da7a0894ff97e546d6ac54f6b.jpg"
   ];
 
   const handleScroll = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
@@ -117,39 +95,112 @@ export default function App() {
   };
 
   const exportCSV = () => {
-    let csvContent = "data:text/csv;charset=utf-8,\uFEFFKỳ trả nợ,Dư nợ đầu kỳ,Gốc phải trả,Lãi phải trả,Tổng tiền phải trả\n";
-    let remainingLoan = loanAmount;
-    const monthlyRate = interestRateAnnual / 100 / 12;
     const totalMonths = loanTermYears * 12;
-    const records = [];
+    const monthlyRate = interestRateAnnual / 100 / 12;
+    let remainingLoan = loanAmount;
     
-    if (paymentMethod === 'decreasing') {
-       const principalPM = loanAmount / totalMonths;
-       for(let i=1; i<=totalMonths; i++){
-          const interest = remainingLoan * monthlyRate;
-          const total = principalPM + interest;
-          records.push(`${i},${Math.round(remainingLoan)},${Math.round(principalPM)},${Math.round(interest)},${Math.round(total)}`);
-          remainingLoan -= principalPM;
-       }
-    } else {
-       if (monthlyRate > 0) {
-           const monthlyPmt = loanAmount * (monthlyRate * Math.pow(1 + monthlyRate, totalMonths)) / (Math.pow(1 + monthlyRate, totalMonths) - 1);
-           for(let i=1; i<=totalMonths; i++){
-              const interest = remainingLoan * monthlyRate;
-              const principal = monthlyPmt - interest;
-              records.push(`${i},${Math.round(remainingLoan)},${Math.round(principal)},${Math.round(interest)},${Math.round(monthlyPmt)}`);
-              remainingLoan -= principal;
-           }
-       }
+    const aoa: any[][] = [];
+    
+    // Header section
+    aoa.push(["BẢNG TÍNH LỘ TRÌNH THANH TOÁN", "", "", "", ""]); // Row 1
+    aoa.push(["", "", "", "", ""]); // Row 2
+    aoa.push(["I. THÔNG TIN ĐẦU VÀO (Có thể thay đổi để tính tự động)", "", "", "", ""]); // Row 3
+    aoa.push(["Tên dự án:", "Tân Quan - Đồng Nai", "", "", ""]); // Row 4
+    aoa.push(["Giá trị tài sản (VNĐ):", { t: 'n', v: propertyValue }, "", "", ""]); // Row 5
+    aoa.push(["Vốn tự có (VNĐ):", { t: 'n', v: propertyValue - loanAmount, f: "B5-B7" }, "", "", ""]); // Row 6
+    aoa.push(["Vốn vay (VNĐ):", { t: 'n', v: loanAmount }, "", "", ""]); // Row 7
+    aoa.push(["Lãi suất (%/năm):", { t: 'n', v: interestRateAnnual }, "", "", ""]); // Row 8
+    aoa.push(["Thời gian vay (năm):", { t: 'n', v: loanTermYears }, "", "", ""]); // Row 9
+    aoa.push(["Phương thức trả:", paymentMethod === 'decreasing' ? 'Dư nợ giảm dần' : 'Dư nợ ban đầu (Đều hàng tháng)', "", "", ""]); // Row 10
+    aoa.push(["", "", "", "", ""]); // Row 11
+    aoa.push(["II. LỘ TRÌNH THANH TOÁN CHI TIẾT", "", "", "", ""]); // Row 12
+    aoa.push(["Kỳ trả nợ", "Dư nợ đầu kỳ (VNĐ)", "Gốc phải trả (VNĐ)", "Lãi phải trả (VNĐ)", "Tổng tiền phải trả (VNĐ)"]); // Row 13
+    
+    // Table rows
+    const startRow = 14;
+    for (let i = 1; i <= totalMonths; i++) {
+        const r = startRow + i - 1; // 1-indexed row number in EXCEL
+
+        let b_val = remainingLoan; // initial value for B
+        let b_form = i === 1 ? `B7` : `B${r-1}-C${r-1}`;
+        
+        let c_val, c_form, d_val, d_form, e_val, e_form;
+        
+        if (paymentMethod === 'decreasing') {
+            const principalPM = loanAmount / totalMonths;
+            const interestPM = remainingLoan * monthlyRate;
+            const totalPM = principalPM + interestPM;
+            
+            c_val = principalPM;
+            c_form = `B$7/(B$9*12)`;
+            
+            d_val = interestPM;
+            d_form = `B${r}*(B$8/100/12)`;
+            
+            e_val = totalPM;
+            e_form = `C${r}+D${r}`;
+            
+            remainingLoan -= principalPM;
+        } else {
+            const monthlyPmt = loanAmount * (monthlyRate * Math.pow(1 + monthlyRate, totalMonths)) / (Math.pow(1 + monthlyRate, totalMonths) - 1);
+            const interestPM = remainingLoan * monthlyRate;
+            const principalPM = monthlyPmt - interestPM;
+            
+            c_val = principalPM;
+            c_form = `E${r}-D${r}`;
+            
+            d_val = interestPM;
+            d_form = `B${r}*(B$8/100/12)`;
+            
+            e_val = monthlyPmt;
+            e_form = `PMT(B$8/100/12,B$9*12,-B$7)`;
+            
+            remainingLoan -= principalPM;
+        }
+
+        aoa.push([
+            { t: 'n', v: i }, // A: Kỳ trả nợ
+            { t: 'n', v: Math.round(b_val), f: b_form }, // B: Dư nợ đầu kỳ
+            { t: 'n', v: Math.round(c_val), f: c_form }, // C: Gốc
+            { t: 'n', v: Math.round(d_val), f: d_form }, // D: Lãi
+            { t: 'n', v: Math.round(e_val), f: e_form }  // E: Tổng
+        ]);
     }
-    csvContent += records.join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "lo-trinh-thanh-toan.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    
+    const worksheet = xlsx.utils.aoa_to_sheet(aoa);
+    
+    // Apply number format to values
+    const numFmt = '#,##0';
+    // Format input cells
+    ['B5', 'B6', 'B7'].forEach(cell => {
+        if (worksheet[cell]) worksheet[cell].z = numFmt;
+    });
+    
+    // Format table cells
+    for (let r = startRow; r < startRow + totalMonths; r++) {
+        ['B', 'C', 'D', 'E'].forEach(col => {
+            const cell = col + r;
+            if (worksheet[cell]) {
+                worksheet[cell].z = numFmt;
+            }
+        });
+    }
+    
+    // Set column widths to perfectly fit A4 width
+    // Total approx acceptable for portrait A4 in Excel is ~88 standard chars wide
+    const wscols = [
+        {wch: 12}, // A: Kỳ trả nợ
+        {wch: 22}, // B: Dư nợ đầu kỳ
+        {wch: 22}, // C: Gốc phải trả
+        {wch: 22}, // D: Lãi phải trả
+        {wch: 24}  // E: Tổng tiền phải trả
+    ];
+    worksheet['!cols'] = wscols;
+
+    const workbook = xlsx.utils.book_new();
+    xlsx.utils.book_append_sheet(workbook, worksheet, "Lộ trình thanh toán");
+    
+    xlsx.writeFile(workbook, "lo-trinh-thanh-toan.xlsx");
   };
 
   useEffect(() => {
@@ -454,7 +505,7 @@ export default function App() {
                        </div>
                        
                        <button onClick={exportCSV} className="w-full mt-8 bg-white/10 hover:bg-white/20 text-white py-4 rounded-xl font-bold flex flex-row items-center justify-center gap-2 transition border border-white/20">
-                          <DownloadCloud size={20} /> XUẤT LỘ TRÌNH THANH TOÁN (CSV)
+                          <DownloadCloud size={20} /> XUẤT LỘ TRÌNH THANH TOÁN (EXCEL)
                        </button>
                     </div>
                 </motion.div>
