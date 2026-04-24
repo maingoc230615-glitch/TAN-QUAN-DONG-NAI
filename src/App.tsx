@@ -106,8 +106,8 @@ export default function App() {
     aoa.push(["", "", "", "", ""]); // Row 2
     aoa.push(["I. THÔNG TIN ĐẦU VÀO (Có thể thay đổi để tính tự động)", "", "", "", ""]); // Row 3
     aoa.push(["Tên dự án:", "Tân Quan - Đồng Nai", "", "", ""]); // Row 4
-    aoa.push(["Giá trị tài sản (VNĐ):", { t: 'n', v: propertyValue }, "", "", ""]); // Row 5
-    aoa.push(["Vốn tự có (VNĐ):", { t: 'n', v: propertyValue - loanAmount, f: "B5-B7" }, "", "", ""]); // Row 6
+    aoa.push(["Giá trị tài sản (VNĐ):", { t: 'n', v: propertyPrice }, "", "", ""]); // Row 5
+    aoa.push(["Vốn tự có (VNĐ):", { t: 'n', v: ownCapital, f: "B5-B7" }, "", "", ""]); // Row 6
     aoa.push(["Vốn vay (VNĐ):", { t: 'n', v: loanAmount }, "", "", ""]); // Row 7
     aoa.push(["Lãi suất (%/năm):", { t: 'n', v: interestRateAnnual }, "", "", ""]); // Row 8
     aoa.push(["Thời gian vay (năm):", { t: 'n', v: loanTermYears }, "", "", ""]); // Row 9
